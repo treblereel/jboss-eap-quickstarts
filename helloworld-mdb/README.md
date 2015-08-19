@@ -1,22 +1,21 @@
-helloworld-jms: Helloworld JMS Example
-======================
-Author: Weston Price  
+helloworld-mdb: Helloworld Using an MDB (Message-Driven Bean)
+============================================================
+Author: Serge Pagop, Andy Taylor, Jeff Mesnil  
 Level: Intermediate  
-Technologies: JMS  
-Summary: The `helloworld-jms` quickstart demonstrates the use of external JMS clients with JBoss EAP.  
+Technologies: JMS, EJB, MDB  
+Summary: The `helloworld-mdb` quickstart uses *JMS* and *EJB Message-Driven Bean* (MDB) to create and deploy JMS topic and queue resources in JBoss EAP.  
 Target Product: JBoss EAP  
 Source: <https://github.com/jboss-developer/jboss-eap-quickstarts/>  
 
 What is it?
 -----------
 
-The `helloworld-jms` quickstart demonstrates the use of external JMS clients with Red Hat JBoss Enterprise Application Platform.
+The `helloworld-mdb` quickstart demonstrates the use of *JMS* and *EJB Message-Driven Bean* in Red Hat JBoss Enterprise Application Platform.
 
-It contains the following:
+This project creates two JMS resources:
 
-1. A message producer that sends messages to a JMS destination deployed to a JBoss EAP server.
-
-2. A message consumer that receives message from a JMS destination deployed to a JBoss EAP server. 
+* A queue named `HELLOWORLDMDBQueue` bound in JNDI as `java:/queue/HELLOWORLDMDBQueue`
+* A topic named `HELLOWORLDMDBTopic` bound in JNDI as `java:/topic/HELLOWORLDMDBTopic`
 
 
 System requirements
@@ -33,28 +32,19 @@ Use of EAP_HOME
 In the following instructions, replace `EAP_HOME` with the actual path to your JBoss EAP installation. The installation path is described in detail here: [Use of EAP_HOME and JBOSS_HOME Variables](https://github.com/jboss-developer/jboss-developer-shared-resources/blob/master/guides/USE_OF_EAP_HOME.md#use-of-eap_home-and-jboss_home-variables).
 
 
-Add an Application User
-----------------
+Start the JBoss EAP Server with the Full Profile
+---------------
 
-This quickstart uses secured management interfaces and requires that you create the following application user to access the running application. 
+1. Open a command prompt and navigate to the root of the JBoss EAP directory.
+2. The following shows the command line to start the server with the full profile:
 
-| **UserName** | **Realm** | **Password** | **Roles** |
-|:-----------|:-----------|:-----------|:-----------|
-| quickstartUser| ApplicationRealm | quickstartPwd1!| guest |
-
-To add the application user, open a command prompt and type the following command:
-
-        For Linux:   EAP_HOME/bin/add-user.sh -a -u 'quickstartUser' -p 'quickstartPwd1!' -g 'guest'
-        For Windows: EAP_HOME\bin\add-user.bat  -a -u 'quickstartUser' -p 'quickstartPwd1!' -g 'guest'
-
-If you prefer, you can use the add-user utility interactively. 
-For an example of how to use the add-user utility, see the instructions located here: [Add an Application User](https://github.com/jboss-developer/jboss-developer-shared-resources/blob/master/guides/CREATE_USERS.md#add-an-application-user).
-
+        For Linux:   EAP_HOME/bin/standalone.sh -c standalone-full.xml
+        For Windows: EAP_HOME\bin\standalone.bat -c standalone-full.xml
 
 Configure the JBoss EAP Server
 ---------------------------
 
-You configure the JMS `test` queue by running JBoss CLI commands. For your convenience, this quickstart batches the commands into a `configure-jms.cli` script provided in the root directory of this quickstart. 
+You configure the JMS `HELLOWORLDMDBQueue` queue and `HELLOWORLDMDBTopic` topic by running JBoss CLI commands. For your convenience, this quickstart batches the commands into a `configure-jms.cli` script provided in the root directory of this quickstart. 
 
 1. Before you begin, back up your server configuration file
     * If it is running, stop the JBoss EAP server.
@@ -82,112 +72,63 @@ Review the Modified Server Configuration
 
 After stopping the server, open the `EAP_HOME/standalone/configuration/standalone-full.xml` file and review the changes.
 
-The following `testQueue` jms-queue was configured in a new `<jms-destinations>` element under the hornetq-server section of the `messaging` subsystem.
+The following `HELLOWORLDMDBQueue` jms-queue `HELLOWORLDMDBTopic` jms-topic and were configured in <server name="default"> element under the <subsystem xmlns="urn:jboss:domain:messaging-activemq:1.0"> section of the `messaging` subsystem.
 
-      <jms-destinations>
-          <jms-queue name="testQueue">
-              <entry name="queue/test"/>
-              <entry name="java:jboss/exported/jms/queue/test"/>
-          </jms-queue>
-      </jms-destinations>
- 
-
-Start the JBoss EAP Server with the Full Profile
----------------
-
-1. Open a command prompt and navigate to the root of the JBoss EAP directory.
-2. The following shows the command line to start the server with the full profile:
-
-        For Linux:   EAP_HOME/bin/standalone.sh -c standalone-full.xml
-        For Windows: EAP_HOME\bin\standalone.bat -c standalone-full.xml
+      <jms-queue name="HELLOWORLDMDBQueue" entries="queue/HELLOWORLDMDBQueue java:jboss/exported/jms/queue/HELLOWORLDMDBQueue"/>
+      <jms-topic name="HELLOWORLDMDBTopic" entries="topic/HELLOWORLDMDBTopic java:jboss/exported/jms/topic/HELLOWORLDMDBTopic"/>
 
 
-Build and Execute the Quickstart
+
+Build and Deploy the Quickstart
 -------------------------
 
-To run the quickstart from the command line:
+1. Make sure you have started the JBoss EAP server as described above.
+2. Open a command prompt and navigate to the root directory of this quickstart.
+3. Type this command to build and deploy the archive:
 
-1. Make sure you have started the JBoss EAP server. See the instructions in the previous section.
+        mvn clean install wildfly:deploy
 
-2. Open a command prompt and navigate to the root of the helloworld-jms quickstart directory:
+4. This will deploy `target/jboss-helloworld-mdb.war` to the running instance of the server. Look at the JBoss EAP console or Server log and you should see log messages corresponding to the deployment of the message-driven beans and the JMS destinations:
 
-        cd PATH_TO_QUICKSTARTS/helloworld-jms
+9:19:42,246 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-8) WFLYSRV0027: Starting deployment of "jboss-helloworld-mdb.war" (runtime-name: "jboss-helloworld-mdb.war")
+19:19:42,378 INFO  [org.jboss.as.ejb3] (MSC service thread 1-4) WFLYEJB0042: Started message driven bean 'HelloWorldQTopicMDB' with 'activemq-ra.rar' resource adapter
+19:19:42,391 INFO  [org.jboss.as.ejb3] (MSC service thread 1-7) WFLYEJB0042: Started message driven bean 'HelloWorldQueueMDB' with 'activemq-ra.rar' resource adapter
 
-3. Type the following command to compile and execute the quickstart:
 
-        mvn clean compile exec:java
 
- 
-Investigate the Console Output
+Access the application 
+---------------------
+
+The application will be running at the following URL: <http://localhost:8080/jboss-helloworld-mdb/> and will send some messages to the queue.
+
+To send messages to the topic, use the following URL: <http://localhost:8080/jboss-helloworld-mdb/HelloWorldMDBServletClient?topic>
+
+Investigate the Server Console Output
 -------------------------
 
-If the Maven command is successful, with the default configuration you will see output similar to this:
+Look at the JBoss EAP console or Server log and you should see log messages like the following:
 
-    Mar 14, 2012 1:38:58 PM org.jboss.as.quickstarts.jms.HelloWorldJMSClient main
-    INFO: Attempting to acquire connection factory "jms/RemoteConnectionFactory"
-    Mar 14, 2012 1:38:58 PM org.jboss.as.quickstarts.jms.HelloWorldJMSClient main
-    INFO: Found connection factory "jms/RemoteConnectionFactory" in JNDI
-    Mar 14, 2012 1:38:58 PM org.jboss.as.quickstarts.jms.HelloWorldJMSClient main
-    INFO: Attempting to acquire destination "jms/queue/test"
-    Mar 14, 2012 1:38:58 PM org.jboss.as.quickstarts.jms.HelloWorldJMSClient main
-    INFO: Found destination "jms/queue/test" in JNDI
-    Mar 14, 2012 1:38:58 PM org.jboss.as.quickstarts.jms.HelloWorldJMSClient main
-    INFO: Sending 1 messages with content: Hello, World!
-    Mar 14, 2012 1:38:58 PM org.jboss.as.quickstarts.jms.HelloWorldJMSClient main
-    INFO: Received message with content Hello, World!
-
-_Note_: After the above INFO message, you may see the following error. You can ignore the error as it is a well known error message and does not indicate the Maven command was unsuccessful in any way. 
-
-    Mar 14, 2012 1:38:58 PM org.jboss.naming.remote.protocol.v1.RemoteNamingStoreV1$MessageReceiver handleEnd
-    ERROR: Channel end notification received, closing channel Channel ID cd114175 (outbound) of Remoting connection 00392fe8 to localhost/127.0.0.1:4447
+19:19:48,994 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldQueueMDB] (Thread-3 (ActiveMQ-client-global-threads-399527411)) Received Message from queue: This is message 2
+19:19:48,995 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldQueueMDB] (Thread-42 (ActiveMQ-client-global-threads-399527411)) Received Message from queue: This is message 5
+19:19:48,995 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldQueueMDB] (Thread-45 (ActiveMQ-client-global-threads-399527411)) Received Message from queue: This is message 4
+19:19:49,007 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldQueueMDB] (Thread-43 (ActiveMQ-client-global-threads-399527411)) Received Message from queue: This is message 3
+19:19:49,008 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldQueueMDB] (Thread-37 (ActiveMQ-client-global-threads-399527411)) Received Message from queue: This is message 1
+19:19:51,979 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldTopicMDB] (Thread-43 (ActiveMQ-client-global-threads-399527411)) Received Message from topic: This is message 2
+19:19:51,979 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldTopicMDB] (Thread-3 (ActiveMQ-client-global-threads-399527411)) Received Message from topic: This is message 1
+19:19:51,982 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldTopicMDB] (Thread-45 (ActiveMQ-client-global-threads-399527411)) Received Message from topic: This is message 4
+19:19:51,983 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldTopicMDB] (Thread-42 (ActiveMQ-client-global-threads-399527411)) Received Message from topic: This is message 5
+19:19:51,983 INFO  [class org.jboss.as.quickstarts.mdb.HelloWorldTopicMDB] (Thread-37 (ActiveMQ-client-global-threads-399527411)) Received Message from topic: This is message 3
 
 
-Optional Properties
--------------------
 
-The example provides for a certain amount of customization for the `mvn:exec` plug-in using the system properties.
+Undeploy the Archive
+--------------------
 
-* `username`
-   
-    This username is used for both the JMS connection and the JNDI look-up.  Instructions to set up the quickstart application user can be found here: [Add an Application User](https://github.com/jboss-developer/jboss-developer-shared-resources/blob/master/guides/CREATE_USERS.md#add-an-application-user).
-   
-    Default: `quickstartUser`
-		
-* `password`
+1. Make sure you have started the JBoss EAP server as described above.
+2. Open a command prompt and navigate to the root directory of this quickstart.
+3. When you are finished testing, type this command to undeploy the archive:
 
-    This password is used for both the JMS connection and the JNDI look-up.  Instructions to set up the quickstart application user can be found here: [Add an Application User](https://github.com/jboss-developer/jboss-developer-shared-resources/blob/master/guides/CREATE_USERS.md#add-an-application-user)
-   
-    Default: `quickstartPwd1!`
-
-* `connection.factory`
-
-    The name of the JMS ConnectionFactory you want to use.
-
-    Default: `jms/RemoteConnectionFactory`
-
-* `destination`
-
-    The name of the JMS Destination you want to use.
-   
-    Default: `jms/queue/test`
-
-* `message.count`
-
-    The number of JMS messages you want to produce and consume.
-
-    Default: `1`
-
-* `message.content`
-
-    The content of the JMS TextMessage.
-	
-    Default: `"Hello, World!"`
-
-* `java.naming.provider.url`
-
-	  This property allows configuration of the JNDI directory used to lookup the JMS destination. This is useful when the client resides on another host. 
-
-    Default: `"localhost"`
+        mvn wildfly:undeploy
 
 
 Remove the JMS Configuration
@@ -205,7 +146,7 @@ You can remove the JMS configuration by running the  `remove-jms.cli` script pro
 
         For Linux: EAP_HOME/bin/jboss-cli.sh --connect --file=remove-jms.cli 
         For Windows: EAP_HOME\bin\jboss-cli.bat --connect --file=remove-jms.cli 
-   This script removes the `test` queue from the `messaging` subsystem in the server configuration. You should see the following result when you run the script:
+   This script removes `HELLOWORLDMDBQueue` queue and `HELLOWORLDMDBTopic` topic from the `messaging` subsystem in the server configuration. You should see the following result when you run the script:
 
         The batch executed successfully.
         {"outcome" => "success"}
@@ -220,21 +161,16 @@ Run the Quickstart in Red Hat JBoss Developer Studio or Eclipse
 -------------------------------------
 You can also start the server and deploy the quickstarts or run the Arquillian tests from Eclipse using JBoss tools. For general information about how to import a quickstart, add a JBoss EAP server, and build and deploy a quickstart, see [Use JBoss Developer Studio or Eclipse to Run the Quickstarts](https://github.com/jboss-developer/jboss-developer-shared-resources/blob/master/guides/USE_JBDS.md#use-jboss-developer-studio-or-eclipse-to-run-the-quickstarts) 
 
-This quickstart consists of multiple projects, so it deploys and runs differently in JBoss Developer Studio than the other quickstarts.
+_NOTE:_ Within JBoss Developer Studio, be sure to define a server runtime environment that uses the `standalone-full.xml` configuration file.
 
-1. Configure and start the JBoss EAP server Red Hat JBoss Developer Studio:
-   * Define a server runtime environment that uses the `standalone-full.xml` configuration file.
-   * Start the server defined in the previous step.
-2. Outside of JBoss Developer Studio, configure the JMS `test` queue by running the JBoss CLI commands as described in the section above entitled *Configure the JBoss EAP Server*. 
-3. In JBoss Developer Studio, right-click and choose `Run As` --> `Java Application`.  In the `Select Java Application` window, choose `HellowWorldJMSClient - org.jboss.as.quickstarts.jms` and click `OK`. The client output displays in the `Console` window.
-The output messages appear in the `Console` window.
 
 Debug the Application
 ------------------------------------
 
 If you want to debug the source code of any library in the project, run the following command to pull the source into your local repository. The IDE should then detect it.
 
-        mvn dependency:sources
+    mvn dependency:sources
+   
 
 
- 
+<!-- Build and Deploy the Quickstart to OpenShift - Coming soon! -->
